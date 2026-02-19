@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { predictDelay, getFeatureImportance } from "./api";
+import { predictDelay } from "./api";
 import FeatureImportanceChart from "./components/FeatureImportanceChart";
 import ErrorBoundary from "./components/ErrorBoundary";
 import "./index.css";
@@ -22,7 +22,6 @@ export default function App() {
   const handlePredict = async () => {
     setLoading(true);
     try {
-      // Ensure numeric fields are numbers
       const payload = {
         weather_risk_score: Number(form.weather_risk_score),
         temp_max: Number(form.temp_max),
@@ -34,10 +33,9 @@ export default function App() {
       };
 
       const prediction = await predictDelay(payload);
-      setResult(prediction);
 
-      const fi = await getFeatureImportance();
-      setFeatures(fi);
+      setResult(prediction);
+      setFeatures(prediction.feature_importance); // ✅ FIX HERE
     } catch (err) {
       console.error("Prediction error:", err);
     } finally {
@@ -61,8 +59,8 @@ export default function App() {
             key === "shipping_mode" || key === "nearest_port" ? null : (
               <input
                 key={key}
-                value={form[key]}
                 type="number"
+                value={form[key]}
                 onChange={(e) =>
                   setForm({ ...form, [key]: e.target.value })
                 }
