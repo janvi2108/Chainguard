@@ -16,27 +16,30 @@ export default function App() {
   });
 
   const [result, setResult] = useState(null);
-  const [features, setFeatures] = useState([]);
+  const [features, setFeatures] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const handlePredict = async () => {
     setLoading(true);
     try {
-      const prediction = await predictDelay({
-        ...form,
+      // Ensure numeric fields are numbers
+      const payload = {
         weather_risk_score: Number(form.weather_risk_score),
         temp_max: Number(form.temp_max),
         rainfall: Number(form.rainfall),
         wind_speed: Number(form.wind_speed),
         port_congestion: Number(form.port_congestion),
-      });
+        shipping_mode: form.shipping_mode,
+        nearest_port: form.nearest_port,
+      };
 
+      const prediction = await predictDelay(payload);
       setResult(prediction);
 
       const fi = await getFeatureImportance();
       setFeatures(fi);
     } catch (err) {
-      console.error(err);
+      console.error("Prediction error:", err);
     } finally {
       setLoading(false);
     }
@@ -49,15 +52,17 @@ export default function App() {
         <p>AI-powered supply chain delay intelligence</p>
       </header>
 
+      {/* Shipment Parameters */}
       <section className="card">
         <h2>Shipment Parameters</h2>
 
         <div className="grid">
           {Object.keys(form).map((key) =>
-            key.includes("mode") || key.includes("port") ? null : (
+            key === "shipping_mode" || key === "nearest_port" ? null : (
               <input
                 key={key}
                 value={form[key]}
+                type="number"
                 onChange={(e) =>
                   setForm({ ...form, [key]: e.target.value })
                 }
@@ -95,11 +100,17 @@ export default function App() {
         </button>
       </section>
 
+      {/* Prediction Result */}
       {result && (
         <section className="card result-card">
           <h2>Prediction</h2>
-          <div className={`badge ${result.delay ? "high" : "low"}`}>
-            {result.delay ? "High Risk" : "Low Risk"}
+
+          <div
+            className={`badge ${
+              result.delay_risk === "HIGH" ? "high" : "low"
+            }`}
+          >
+            {result.delay_risk} Risk
           </div>
 
           <div className="confidence">
@@ -108,22 +119,20 @@ export default function App() {
               <div
                 className="fill"
                 style={{
-                  width: `${Math.min(
-                    100,
-                    Math.round(result.probability * 100 || 0)
+                  width: `${Math.round(
+                    result.delay_probability * 100
                   )}%`,
                 }}
               />
             </div>
             <span>
-              {isNaN(result.probability)
-                ? "N/A"
-                : `${(result.probability * 100).toFixed(1)}%`}
+              {(result.delay_probability * 100).toFixed(1)}%
             </span>
           </div>
         </section>
       )}
 
+      {/* Feature Importance */}
       <section className="card">
         <h2>Feature Importance</h2>
         <ErrorBoundary>
