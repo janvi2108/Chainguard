@@ -1,10 +1,10 @@
 export default function FeatureImportanceChart({ data }) {
-  // Handle empty / null / invalid data
+  // Guard: data must be a non-null object
   if (!data || typeof data !== "object") {
     return <p>No feature importance available</p>;
   }
 
-  // Convert object → array
+  // Convert object → iterable array
   const entries = Object.entries(data);
 
   if (entries.length === 0) {
@@ -22,9 +22,7 @@ export default function FeatureImportanceChart({ data }) {
           <div className="bar">
             <div
               className="fill"
-              style={{
-                width: `${Math.round(value * 100)}%`,
-              }}
+              style={{ width: `${value * 100}%` }}
             />
           </div>
 
