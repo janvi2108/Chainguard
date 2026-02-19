@@ -16,7 +16,7 @@ export default function App() {
   });
 
   const [result, setResult] = useState(null);
-  const [features, setFeatures] = useState(null);
+  const [features, setFeatures] = useState([]); // ✅ ALWAYS ARRAY
   const [loading, setLoading] = useState(false);
 
   const handlePredict = async () => {
@@ -35,9 +35,21 @@ export default function App() {
       const prediction = await predictDelay(payload);
 
       setResult(prediction);
-      setFeatures(prediction.feature_importance); // ✅ FIX HERE
+
+      // ✅ Convert object → array HERE (single source of truth)
+      const fiArray = prediction.feature_importance
+        ? Object.entries(prediction.feature_importance).map(
+            ([feature, value]) => ({
+              feature,
+              value,
+            })
+          )
+        : [];
+
+      setFeatures(fiArray);
     } catch (err) {
       console.error("Prediction error:", err);
+      setFeatures([]);
     } finally {
       setLoading(false);
     }
@@ -98,7 +110,7 @@ export default function App() {
         </button>
       </section>
 
-      {/* Prediction Result */}
+      {/* Prediction */}
       {result && (
         <section className="card result-card">
           <h2>Prediction</h2>
